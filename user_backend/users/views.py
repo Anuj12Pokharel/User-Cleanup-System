@@ -1,18 +1,28 @@
 # api/views.py
+import logging
+import smtplib
+from datetime import timedelta
+
+from django.utils import timezone
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
+from django.core.cache import cache
+from django.db import transaction
+from django.contrib.auth import get_user_model
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from users.models import CleanupReport
-from users.serializers import CleanupReportSerializer
-from users.tasks import cleanup_inactive_users
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
-from django.utils import timezone
-from django.contrib.auth import get_user_model
+from rest_framework import status, permissions, generics
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+from users.models import AppUser, CleanupReport
+from users.serializers import CleanupReportSerializer
+from users.tasks import cleanup_inactive_users
 from .serializers import RegisterSerializer
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 User = get_user_model()
 
@@ -53,22 +63,6 @@ class login_serializers(TokenObtainPairView):
         return response
 
 
-# api/views.py
-import logging
-import smtplib
-from datetime import timedelta
-
-from django.utils import timezone
-from django.conf import settings
-from django.template.loader import render_to_string
-from django.core.mail import EmailMultiAlternatives
-from django.core.cache import cache
-from django.db import transaction
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
 
 from users.models import AppUser, CleanupReport
 from users.serializers import CleanupReportSerializer
@@ -136,13 +130,9 @@ def _send_cleanup_report_email_sync(report, deleted_users):
         logger.exception("Unexpected error sending cleanup email (sync).")
         return {"status": "failed", "reason": str(exc)}
 # api/views.py
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status, permissions
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from users.models import CleanupReport
-from users.serializers import CleanupReportSerializer
+
+
 
 class LatestReportView(APIView):
     authentication_classes = [JWTAuthentication]
